@@ -314,3 +314,5 @@ void GcodeSuite::M777() {
   //GcodeSuite::process_parsed_command();
   
 }
+
+#endif // HAS_LEVELING

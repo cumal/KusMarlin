@@ -157,6 +157,11 @@
   #define E1_CS_PIN                           44
 #endif
 
+#define M1_ENABLE_PIN      59  // New pins
+#define M2_ENABLE_PIN      64 // New pins
+#define M3_ENABLE_PIN      65 // New pins
+#define M4_ENABLE_PIN      66 // New pins
+
 //
 // Temperature Sensors
 //
