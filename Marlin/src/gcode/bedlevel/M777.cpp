@@ -22,17 +22,20 @@
 
 #include "../../inc/MarlinConfig.h"
 
+#if HAS_LEVELING
+
 #include "../gcode.h"
 #include "../../feature/bedlevel/bedlevel.h"
 #include "../../module/planner.h"
+#include "../../module/probe.h"
 #include "../../core/serial.h"
 
 #if ENABLED(EEPROM_SETTINGS)
-  #include "../../module/configuration_store.h"
+  #include "../../module/settings.h"
 #endif
 
 #if ENABLED(EXTENSIBLE_UI)
-  #include "../../lcd/extensible_ui/ui_api.h"
+  #include "../../lcd/extui/ui_api.h"
 #endif
 
 //#define M420_C_USE_MEAN
