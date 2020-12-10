@@ -207,7 +207,11 @@ void GcodeSuite::M777() {
   parser.parse("M206 X0 Y0 Z0");
   GcodeSuite::process_parsed_command();
   
-  parser.parse("G28");
+  parser.parse("G28 Z");
+  GcodeSuite::process_parsed_command();
+  planner.synchronize();
+
+    parser.parse("G28 X Y");
   GcodeSuite::process_parsed_command();
   planner.synchronize();
 
