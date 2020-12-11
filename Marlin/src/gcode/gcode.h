@@ -240,6 +240,7 @@
  * M701 - Load filament (Requires FILAMENT_LOAD_UNLOAD_GCODES)
  * M702 - Unload filament (Requires FILAMENT_LOAD_UNLOAD_GCODES)
  * M777 - Hardware bed leveling
+ * M778 - Center height
  * M810-M819 - Define/execute a G-code macro (Requires GCODE_MACROS)
  * M851 - Set Z probe's XYZ offsets in current units. (Negative values: X=left, Y=front, Z=below)
  * M852 - Set skew factors: "M852 [I<xy>] [J<xz>] [K<yz>]". (Requires SKEW_CORRECTION_GCODE, and SKEW_CORRECTION_FOR_Z for IJ)
@@ -804,6 +805,8 @@ private:
   #endif
 
   static void M777();
+
+  static void M778();
 
   TERN_(GCODE_MACROS, static void M810_819());
 
