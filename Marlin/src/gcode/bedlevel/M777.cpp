@@ -45,7 +45,7 @@
  */
  
  void moveup(const int mot, float loo) {
-  idle();
+  GcodeSuite::host_keepalive();
   SERIAL_ECHO("Adjusting...");
   SERIAL_ECHOLN(mot);
   if (loo>800){
@@ -82,11 +82,11 @@
   analogWrite(M4_ENABLE_PIN, 255);
   // Activate Z steppers to keep height
   analogWrite(Z_ENABLE_PIN, 0);
-  idle();
+  GcodeSuite::host_keepalive();
 }
 
 void movedown(const int mot, float loo) {
-  idle();
+  GcodeSuite::host_keepalive();
   SERIAL_ECHO("Adjusting...");
   SERIAL_ECHOLN(mot);
   if (loo>800){
@@ -123,77 +123,83 @@ void movedown(const int mot, float loo) {
   analogWrite(M4_ENABLE_PIN, 255);
   // Activate Z steppers to keep height
   analogWrite(Z_ENABLE_PIN, 0);
-  idle();
+  GcodeSuite::host_keepalive();
 }
 
 float get_desviation (){
-  idle();
+  GcodeSuite::host_keepalive();
   SERIAL_ECHOLN("Getting desviation");
   float desviation=0;
   const float precission = 0.1;
-  relative_mode = true; //G91
-
+  parser.parse("G91");
+  GcodeSuite::process_parsed_command();
   
-  parser.parse("G1 Z-0.1 F1000");
+  parser.parse("G1 Z-0.1 F800");
 
   while (digitalRead(Z_MIN_PIN) != LOW){
 	  GcodeSuite::process_parsed_command();
     planner.synchronize();
     desviation=desviation+precission;
+    GcodeSuite::host_keepalive();
   }
   
-  relative_mode = false; //G90
-  idle();
+  parser.parse("G90");
+  GcodeSuite::process_parsed_command();
+
+  GcodeSuite::host_keepalive();
   return desviation;
 }
 
 float getMin(float* array, int size){
-  idle();
+  GcodeSuite::host_keepalive();
   SERIAL_ECHOLN("Getting minimun");
   float minimum = array[0];
   for (int i = 0; i < size; i++)
   {
     if (array[i] < minimum) { minimum = array[i]; }
   }
-  idle();
+  GcodeSuite::host_keepalive();
   return minimum;
 }
 
 float getMax(float* array, int size){
-  idle();
+  GcodeSuite::host_keepalive();
   SERIAL_ECHOLN("Getting maximun");
   float maximun = array[0];
   for (int i = 0; i < size; i++)
   {
     if (array[i] > maximun) { maximun = array[i]; }
   }
-  idle();
+  GcodeSuite::host_keepalive();
   return maximun;
 }
 
 float get_steps(float desviation){
-  idle();
+  GcodeSuite::host_keepalive();
   // 400 steps per mm
   SERIAL_ECHOLN("Getting steps");
   float toapply = 400*desviation;
-  idle();
+  GcodeSuite::host_keepalive();
   return toapply;
 }
 
 void a_bit_down(){
-  idle();
-  relative_mode = false; //G90
-  parser.parse("G1 Z5 F1000");
+  GcodeSuite::host_keepalive();
+  parser.parse("G90");
+  GcodeSuite::process_parsed_command();
+  parser.parse("G1 Z5 F800");
   GcodeSuite::process_parsed_command();
   planner.synchronize();
 }
  
- 
 void GcodeSuite::M777() {
+  SERIAL_ECHOLN("Starting HW bed leveling...");
+
   float maxim=100;
   int rep_times=0;
   
-  relative_mode = false; //G90
+  parser.parse("G90");
+  GcodeSuite::process_parsed_command();
   
   //parser.parse("M113");
   //process_parsed_command();
@@ -207,48 +213,43 @@ void GcodeSuite::M777() {
   parser.parse("M206 X0 Y0 Z0");
   GcodeSuite::process_parsed_command();
   
-  parser.parse("G28 Z");
+  parser.parse("G28");
   GcodeSuite::process_parsed_command();
   planner.synchronize();
-
-    parser.parse("G28 X Y");
-  GcodeSuite::process_parsed_command();
-  planner.synchronize();
-
   
   while ( (maxim > 1) && (rep_times < 3) ){
 	  
 	  a_bit_down();
 
-	  parser.parse("G1 X145 Y110 F2500");
+	  parser.parse("G1 X145 Y110 F2000");
 	  GcodeSuite::process_parsed_command();
 	  planner.synchronize();
 	  float desv0 = get_desviation();
 
 	  a_bit_down();
 
-	  parser.parse("G1 X210 Y30 F2500");
+	  parser.parse("G1 X210 Y30 F2000");
 	  GcodeSuite::process_parsed_command();
 	  planner.synchronize();
 	  float desv2 = get_desviation();
 
 	  a_bit_down();
 
-	  parser.parse("G1 X210 Y210 F2500");
+	  parser.parse("G1 X210 Y210 F2000");
 	  GcodeSuite::process_parsed_command();
 	  planner.synchronize();
 	  float desv1 = get_desviation();
 
 	  a_bit_down();
 
-	  parser.parse("G1 X80 Y210 F2500");
+	  parser.parse("G1 X80 Y210 F2000");
 	  GcodeSuite::process_parsed_command();
 	  planner.synchronize();
 	  float desv3 = get_desviation();
 
 	  a_bit_down();
 
-	  parser.parse("G1 X80 Y30 F2500");
+	  parser.parse("G1 X80 Y30 F2000");
 	  GcodeSuite::process_parsed_command();
 	  planner.synchronize();
 	  float desv4 = get_desviation();
@@ -316,6 +317,8 @@ void GcodeSuite::M777() {
   
   //parser.parse("M501");
   //GcodeSuite::process_parsed_command();
+  
+  SERIAL_ECHOLN("Ended HW bed leveling.");
   
 }
 
