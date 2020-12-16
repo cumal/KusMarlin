@@ -73,6 +73,7 @@
     delay (5/2);
     digitalWrite(Z_STEP_PIN, LOW);
     delay (5/2);
+    GcodeSuite::host_keepalive();
   }
 
   // Deactivate all motors
@@ -114,6 +115,7 @@ void movedown(const int mot, float loo) {
     delay (5/2);
     digitalWrite(Z_STEP_PIN, LOW);
     delay (5/2);
+    GcodeSuite::host_keepalive();
   }
 
   // Deactivate all motors
@@ -200,15 +202,6 @@ void GcodeSuite::M777() {
   
   parser.parse("G90");
   GcodeSuite::process_parsed_command();
-  
-  //parser.parse("M113");
-  //process_parsed_command();
-  
-  //parser.parse("M106");
-  //GcodeSuite::process_parsed_command();
-
-  //parser.parse("M104 S120");
-  //GcodeSuite::process_parsed_command();
   
   parser.parse("M206 X0 Y0 Z0");
   GcodeSuite::process_parsed_command();
@@ -300,12 +293,6 @@ void GcodeSuite::M777() {
 	  SERIAL_ECHOLN(maxim); 
 	  rep_times=rep_times+1;
   }
-  
-  //parser.parse("M104 S0");
-  //GcodeSuite::process_parsed_command();
-  
-  //parser.parse("M501");
-  //GcodeSuite::process_parsed_command();
 
   parser.parse("G28 X Y");
   GcodeSuite::process_parsed_command();
@@ -314,9 +301,6 @@ void GcodeSuite::M777() {
   parser.parse("G28 Z");
   GcodeSuite::process_parsed_command();
   planner.synchronize();
-  
-  //parser.parse("M501");
-  //GcodeSuite::process_parsed_command();
   
   SERIAL_ECHOLN("Ended HW bed leveling.");
   
