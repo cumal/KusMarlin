@@ -189,7 +189,7 @@ void a_bit_down(){
   GcodeSuite::host_keepalive();
   parser.parse("G90");
   GcodeSuite::process_parsed_command();
-  parser.parse("G1 Z5 F800");
+  parser.parse("G1 Z5 F600");
   GcodeSuite::process_parsed_command();
   planner.synchronize();
 }
