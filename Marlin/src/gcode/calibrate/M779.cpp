@@ -41,11 +41,14 @@
 //#define M420_C_USE_MEAN
 
 /**
- * M778: Adjust Center Height
+ * M779: Adjust Center Height
  */
  
-void GcodeSuite::M778() {
+void GcodeSuite::M779() {
   SERIAL_ECHOLN("Starting height calibration...");
+
+  parser.parse("M104 S90");
+  GcodeSuite::process_parsed_command();
   
   parser.parse("G90");
   GcodeSuite::process_parsed_command();
