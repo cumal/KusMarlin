@@ -136,7 +136,7 @@ float get_desviation (){
   parser.parse("G91");
   GcodeSuite::process_parsed_command();
   
-  parser.parse("G1 Z-0.1 F800");
+  parser.parse("G1 Z-0.1 F500");
 
   while (digitalRead(Z_MIN_PIN) != LOW){
 	  GcodeSuite::process_parsed_command();
@@ -189,7 +189,7 @@ void a_bit_down(){
   GcodeSuite::host_keepalive();
   parser.parse("G90");
   GcodeSuite::process_parsed_command();
-  parser.parse("G1 Z5 F600");
+  parser.parse("G1 Z5 F500");
   GcodeSuite::process_parsed_command();
   planner.synchronize();
 }
