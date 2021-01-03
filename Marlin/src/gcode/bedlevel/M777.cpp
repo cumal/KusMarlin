@@ -228,21 +228,21 @@ void GcodeSuite::M777() {
 
 	  a_bit_down();
 
-	  parser.parse("G1 X210 Y210 F2000");
+	  parser.parse("G1 X210 Y200 F2000");
 	  GcodeSuite::process_parsed_command();
 	  planner.synchronize();
 	  float desv1 = get_desviation();
 
 	  a_bit_down();
 
-	  parser.parse("G1 X80 Y210 F2000");
+	  parser.parse("G1 X40 Y200 F2000");
 	  GcodeSuite::process_parsed_command();
 	  planner.synchronize();
 	  float desv3 = get_desviation();
 
 	  a_bit_down();
 
-	  parser.parse("G1 X80 Y30 F2000");
+	  parser.parse("G1 X40 Y30 F2000");
 	  GcodeSuite::process_parsed_command();
 	  planner.synchronize();
 	  float desv4 = get_desviation();
