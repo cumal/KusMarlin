@@ -68,6 +68,7 @@
   else if (mot==4){ analogWrite(M4_ENABLE_PIN, 0); }
   
   // Move one step
+  planner.synchronize();
   for (float x = 0; x < loo; x++) {
     digitalWrite(Z_STEP_PIN, HIGH);
     delay (5/2);
@@ -110,6 +111,7 @@ void movedown(const int mot, float loo) {
   else if (mot==4){ analogWrite(M4_ENABLE_PIN, 0); }
   
   // Move one step
+  planner.synchronize();
   for (float x = 0; x < loo; x++) {
     digitalWrite(Z_STEP_PIN, HIGH);
     delay (5/2);
