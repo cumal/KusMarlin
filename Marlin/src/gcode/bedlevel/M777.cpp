@@ -48,8 +48,8 @@
   GcodeSuite::host_keepalive();
   SERIAL_ECHO("Adjusting...");
   SERIAL_ECHOLN(mot);
-  if (loo>800){
-    loo=800;  }
+  if (loo>400){
+    loo=400;  }
   SERIAL_ECHO("Correction...");
   SERIAL_ECHOLN(loo);              
   //Motors UP
@@ -90,8 +90,8 @@ void movedown(const int mot, float loo) {
   GcodeSuite::host_keepalive();
   SERIAL_ECHO("Adjusting...");
   SERIAL_ECHOLN(mot);
-  if (loo>800){
-    loo=800;  }
+  if (loo>400){
+    loo=400;  }
   SERIAL_ECHO("Correction...");
   SERIAL_ECHOLN(loo);              
   //Motors UP
