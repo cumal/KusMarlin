@@ -51,7 +51,9 @@
   if (loo>400){
     loo=400;  }
   SERIAL_ECHO("Correction...");
-  SERIAL_ECHOLN(loo);              
+  SERIAL_ECHOLN(loo);
+  parser.parse("G91");
+  GcodeSuite::process_parsed_command();            
   //Motors UP
   digitalWrite(Z_DIR_PIN, HIGH); //High=up dir
   analogWrite(Z_ENABLE_PIN, 255); //Deactivate all z stepper
@@ -94,7 +96,9 @@ void movedown(const int mot, float loo) {
   if (loo>400){
     loo=400;  }
   SERIAL_ECHO("Correction...");
-  SERIAL_ECHOLN(loo);              
+  SERIAL_ECHOLN(loo);
+  parser.parse("G91");
+  GcodeSuite::process_parsed_command();          
   //Motors UP
   digitalWrite(Z_DIR_PIN, LOW); //High=up dir
   analogWrite(Z_ENABLE_PIN, 255); //Deactivate all z stepper
