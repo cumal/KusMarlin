@@ -58,17 +58,32 @@
   digitalWrite(Z_DIR_PIN, HIGH); //High=up dir
   analogWrite(Z_ENABLE_PIN, 255); //Deactivate all z stepper
   
-  // Deactivate all motors
-  analogWrite(M1_ENABLE_PIN, 255);
-  analogWrite(M2_ENABLE_PIN, 255);
-  analogWrite(M3_ENABLE_PIN, 255);
-  analogWrite(M4_ENABLE_PIN, 255);
-  
-  if (mot==1){ analogWrite(M1_ENABLE_PIN, 0); }
-  else if (mot==2){ analogWrite(M2_ENABLE_PIN, 0); }
-  else if (mot==3){ analogWrite(M3_ENABLE_PIN, 0); }
-  else if (mot==4){ analogWrite(M4_ENABLE_PIN, 0); }
-  
+  if (mot==1){
+    // Activate motor 1 and disable rest
+    analogWrite(M1_ENABLE_PIN, 0);
+    analogWrite(M2_ENABLE_PIN, 255);
+    analogWrite(M3_ENABLE_PIN, 255);
+    analogWrite(M4_ENABLE_PIN, 255);
+  }
+  else if (mot==2){
+    analogWrite(M2_ENABLE_PIN, 0);
+    analogWrite(M1_ENABLE_PIN, 255);
+    analogWrite(M3_ENABLE_PIN, 255);
+    analogWrite(M4_ENABLE_PIN, 255);
+  }
+  else if (mot==3){
+    analogWrite(M3_ENABLE_PIN, 0);
+    analogWrite(M1_ENABLE_PIN, 255);
+    analogWrite(M2_ENABLE_PIN, 255);
+    analogWrite(M4_ENABLE_PIN, 255);
+  }
+  else if (mot==4){
+    analogWrite(M4_ENABLE_PIN, 0);
+    analogWrite(M1_ENABLE_PIN, 255);
+    analogWrite(M2_ENABLE_PIN, 255);
+    analogWrite(M3_ENABLE_PIN, 255);
+  }
+
   // Move one step
   planner.synchronize();
   for (float x = 0; x < loo; x++) {
@@ -104,16 +119,30 @@ void movedown(const int mot, float loo) {
   digitalWrite(Z_DIR_PIN, LOW); //High=up dir
   analogWrite(Z_ENABLE_PIN, 255); //Deactivate all z stepper
   
-  // Deactivate all motors
-  analogWrite(M1_ENABLE_PIN, 255);
-  analogWrite(M2_ENABLE_PIN, 255);
-  analogWrite(M3_ENABLE_PIN, 255);
-  analogWrite(M4_ENABLE_PIN, 255);
-  
-  if (mot==1){ analogWrite(M1_ENABLE_PIN, 0); }
-  else if (mot==2){ analogWrite(M2_ENABLE_PIN, 0); }
-  else if (mot==3){ analogWrite(M3_ENABLE_PIN, 0); }
-  else if (mot==4){ analogWrite(M4_ENABLE_PIN, 0); }
+  if (mot==1){
+    analogWrite(M1_ENABLE_PIN, 0);
+    analogWrite(M2_ENABLE_PIN, 255);
+    analogWrite(M3_ENABLE_PIN, 255);
+    analogWrite(M4_ENABLE_PIN, 255);
+  }
+  else if (mot==2){
+    analogWrite(M2_ENABLE_PIN, 0);
+    analogWrite(M1_ENABLE_PIN, 255);
+    analogWrite(M3_ENABLE_PIN, 255);
+    analogWrite(M4_ENABLE_PIN, 255);
+  }
+  else if (mot==3){
+    analogWrite(M3_ENABLE_PIN, 0);
+    analogWrite(M1_ENABLE_PIN, 255);
+    analogWrite(M2_ENABLE_PIN, 255);
+    analogWrite(M4_ENABLE_PIN, 255);
+  }
+  else if (mot==4){
+    analogWrite(M4_ENABLE_PIN, 0);
+    analogWrite(M1_ENABLE_PIN, 255);
+    analogWrite(M2_ENABLE_PIN, 255);
+    analogWrite(M3_ENABLE_PIN, 255);
+  }
   
   // Move one step
   planner.synchronize();
