@@ -147,7 +147,7 @@ float get_desviation (){
   parser.parse("G1 Z-0.1 F500");
 
   while (digitalRead(Z_MIN_PIN) != LOW){
-	  GcodeSuite::process_parsed_command();
+    GcodeSuite::process_parsed_command();
     planner.synchronize();
     desviation=desviation+precission;
     idle();
@@ -219,89 +219,89 @@ void GcodeSuite::M777() {
   planner.synchronize();
   
   while ( (maxim > 40) && (rep_times < 5) ){
-	  
+    
     /*
     a_bit_down();
     //Center position
-	  parser.parse("G1 X75 Y75 F1100");
-	  GcodeSuite::process_parsed_command();
-	  planner.synchronize();
-	  float desv0 = get_desviation();
+    parser.parse("G1 X75 Y75 F1100");
+    GcodeSuite::process_parsed_command();
+    planner.synchronize();
+    float desv0 = get_desviation();
     */
 
-	  a_bit_down();
+    a_bit_down();
     //Back left
-	  parser.parse("G1 X200 Y50 F1100");
-	  GcodeSuite::process_parsed_command();
-	  planner.synchronize();
-	  float desv2 = get_desviation();
+    parser.parse("G1 X200 Y50 F1100");
+    GcodeSuite::process_parsed_command();
+    planner.synchronize();
+    float desv2 = get_desviation();
 
-	  a_bit_down();
+    a_bit_down();
     //Front left
-	  parser.parse("G1 X200 Y200 F1100");
-	  GcodeSuite::process_parsed_command();
-	  planner.synchronize();
-	  float desv1 = get_desviation();
+    parser.parse("G1 X200 Y200 F1100");
+    GcodeSuite::process_parsed_command();
+    planner.synchronize();
+    float desv1 = get_desviation();
 
-	  a_bit_down();
+    a_bit_down();
     //Front right
-	  parser.parse("G1 X50 Y200 F1100");
-	  GcodeSuite::process_parsed_command();
-	  planner.synchronize();
-	  float desv3 = get_desviation();
+    parser.parse("G1 X50 Y200 F1100");
+    GcodeSuite::process_parsed_command();
+    planner.synchronize();
+    float desv3 = get_desviation();
 
-	  a_bit_down();
+    a_bit_down();
     //Back right
-	  parser.parse("G1 X50 Y50 F1100");
-	  GcodeSuite::process_parsed_command();
-	  planner.synchronize();
-	  float desv4 = get_desviation();
-	  
-	  /* float angles[]={desv1,desv2,desv3,desv4};
-	  float minim = getMin(angles, 4);  // pass the array and its size */
+    parser.parse("G1 X50 Y50 F1100");
+    GcodeSuite::process_parsed_command();
+    planner.synchronize();
+    float desv4 = get_desviation();
+    
+    /* float angles[]={desv1,desv2,desv3,desv4};
+    float minim = getMin(angles, 4);  // pass the array and its size */
 
-	  float corrected1 = get_steps(desv1-desv1);
-	  float corrected2 = get_steps(desv2-desv1);
-	  float corrected3 = get_steps(desv3-desv1);
-	  float corrected4 = get_steps(desv4-desv1);
-	  SERIAL_ECHOLN("Desviation:");
-	  SERIAL_ECHO(corrected1);
-	  SERIAL_ECHO(",");
-	  SERIAL_ECHO(corrected2);
-	  SERIAL_ECHO(",");
-	  SERIAL_ECHO(corrected3);
-	  SERIAL_ECHO(",");
-	  SERIAL_ECHOLN(corrected4);
-	  
-	  a_bit_down();
-	  
-	  float abscorrected1;
-	  float abscorrected2;
-	  float abscorrected3;
-	  float abscorrected4;
-	  
-	  if (corrected1 > 0) { moveup(1, corrected1); abscorrected1=corrected1; }
-	  else { movedown(1, -corrected1); abscorrected1=-corrected1; }
-	  planner.synchronize();
-	  
-	  if (corrected2 > 0) { moveup(2, corrected2); abscorrected2=corrected2; }
-	  else { movedown(2, -corrected2); abscorrected2=-corrected2; }
-	  planner.synchronize();
-	  
-	  if (corrected3 > 0) { moveup(3, corrected3); abscorrected3=corrected3; }
-	  else { movedown(3, -corrected3); abscorrected3=-corrected3; }
-	  planner.synchronize();
-	  
-	  if (corrected4 > 0) { moveup(4, corrected4); abscorrected4=corrected4; }
-	  else { movedown(4, -corrected4); abscorrected4=-corrected4; }
-	  planner.synchronize();
+    float corrected1 = get_steps(desv1-desv1);
+    float corrected2 = get_steps(desv2-desv1);
+    float corrected3 = get_steps(desv3-desv1);
+    float corrected4 = get_steps(desv4-desv1);
+    SERIAL_ECHOLN("Desviation:");
+    SERIAL_ECHO(corrected1);
+    SERIAL_ECHO(",");
+    SERIAL_ECHO(corrected2);
+    SERIAL_ECHO(",");
+    SERIAL_ECHO(corrected3);
+    SERIAL_ECHO(",");
+    SERIAL_ECHOLN(corrected4);
+    
+    a_bit_down();
+    
+    float abscorrected1;
+    float abscorrected2;
+    float abscorrected3;
+    float abscorrected4;
+    
+    if (corrected1 > 0) { moveup(1, corrected1); abscorrected1=corrected1; }
+    else { movedown(1, -corrected1); abscorrected1=-corrected1; }
+    planner.synchronize();
+    
+    if (corrected2 > 0) { moveup(2, corrected2); abscorrected2=corrected2; }
+    else { movedown(2, -corrected2); abscorrected2=-corrected2; }
+    planner.synchronize();
+    
+    if (corrected3 > 0) { moveup(3, corrected3); abscorrected3=corrected3; }
+    else { movedown(3, -corrected3); abscorrected3=-corrected3; }
+    planner.synchronize();
+    
+    if (corrected4 > 0) { moveup(4, corrected4); abscorrected4=corrected4; }
+    else { movedown(4, -corrected4); abscorrected4=-corrected4; }
+    planner.synchronize();
 
-	  float finalangles[]={abscorrected1,abscorrected2,abscorrected3,abscorrected4};
-	  maxim = getMax(finalangles, 4);
-	  if ( (corrected1==corrected2) && (corrected1==corrected3) && (corrected1==corrected4) ) { maxim=0; }
-	  SERIAL_ECHO("Maxim: ");
-	  SERIAL_ECHOLN(maxim); 
-	  rep_times=rep_times+1;
+    float finalangles[]={abscorrected1,abscorrected2,abscorrected3,abscorrected4};
+    maxim = getMax(finalangles, 4);
+    if ( (corrected1==corrected2) && (corrected1==corrected3) && (corrected1==corrected4) ) { maxim=0; }
+    SERIAL_ECHO("Maxim: ");
+    SERIAL_ECHOLN(maxim); 
+    rep_times=rep_times+1;
   }
   
   SERIAL_ECHOLN("Ended HW bed leveling.");
