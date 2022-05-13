@@ -54,7 +54,7 @@ void GcodeSuite::M778() {
   GcodeSuite::process_parsed_command();
   planner.synchronize();
 
-  parser.parse("G1 X145 Y110 F2000");
+  parser.parse("G1 X145 Y110 F1000");
 	GcodeSuite::process_parsed_command();
 	planner.synchronize();
 

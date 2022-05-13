@@ -48,10 +48,12 @@
   GcodeSuite::host_keepalive();
   SERIAL_ECHO("Adjusting...");
   SERIAL_ECHOLN(mot);
-  if (loo>800){
-    loo=800;  }
+  if (loo>400){
+    loo=400;  }
   SERIAL_ECHO("Correction...");
-  SERIAL_ECHOLN(loo);              
+  SERIAL_ECHOLN(loo);
+  parser.parse("G91");
+  GcodeSuite::process_parsed_command();            
   //Motors UP
   digitalWrite(Z_DIR_PIN, HIGH); //High=up dir
   analogWrite(Z_ENABLE_PIN, 255); //Deactivate all z stepper
@@ -68,18 +70,21 @@
   else if (mot==4){ analogWrite(M4_ENABLE_PIN, 0); }
   
   // Move one step
+  planner.synchronize();
   for (float x = 0; x < loo; x++) {
     digitalWrite(Z_STEP_PIN, HIGH);
     delay (5/2);
     digitalWrite(Z_STEP_PIN, LOW);
     delay (5/2);
+    idle();
   }
 
-  // Deactivate all motors
-  analogWrite(M1_ENABLE_PIN, 255);
-  analogWrite(M2_ENABLE_PIN, 255);
-  analogWrite(M3_ENABLE_PIN, 255);
-  analogWrite(M4_ENABLE_PIN, 255);
+  // Deactivate motor
+  if (mot==1){ analogWrite(M1_ENABLE_PIN, 255); }
+  else if (mot==2){ analogWrite(M2_ENABLE_PIN, 255); }
+  else if (mot==3){ analogWrite(M3_ENABLE_PIN, 255); }
+  else if (mot==4){ analogWrite(M4_ENABLE_PIN, 255); }
+
   // Activate Z steppers to keep height
   analogWrite(Z_ENABLE_PIN, 0);
   GcodeSuite::host_keepalive();
@@ -89,10 +94,12 @@ void movedown(const int mot, float loo) {
   GcodeSuite::host_keepalive();
   SERIAL_ECHO("Adjusting...");
   SERIAL_ECHOLN(mot);
-  if (loo>800){
-    loo=800;  }
+  if (loo>400){
+    loo=400;  }
   SERIAL_ECHO("Correction...");
-  SERIAL_ECHOLN(loo);              
+  SERIAL_ECHOLN(loo);
+  parser.parse("G91");
+  GcodeSuite::process_parsed_command();          
   //Motors UP
   digitalWrite(Z_DIR_PIN, LOW); //High=up dir
   analogWrite(Z_ENABLE_PIN, 255); //Deactivate all z stepper
@@ -109,18 +116,21 @@ void movedown(const int mot, float loo) {
   else if (mot==4){ analogWrite(M4_ENABLE_PIN, 0); }
   
   // Move one step
+  planner.synchronize();
   for (float x = 0; x < loo; x++) {
     digitalWrite(Z_STEP_PIN, HIGH);
     delay (5/2);
     digitalWrite(Z_STEP_PIN, LOW);
     delay (5/2);
+    idle();
   }
 
-  // Deactivate all motors
-  analogWrite(M1_ENABLE_PIN, 255);
-  analogWrite(M2_ENABLE_PIN, 255);
-  analogWrite(M3_ENABLE_PIN, 255);
-  analogWrite(M4_ENABLE_PIN, 255);
+  // Deactivate motor
+  if (mot==1){ analogWrite(M1_ENABLE_PIN, 255); }
+  else if (mot==2){ analogWrite(M2_ENABLE_PIN, 255); }
+  else if (mot==3){ analogWrite(M3_ENABLE_PIN, 255); }
+  else if (mot==4){ analogWrite(M4_ENABLE_PIN, 255); }
+  
   // Activate Z steppers to keep height
   analogWrite(Z_ENABLE_PIN, 0);
   GcodeSuite::host_keepalive();
@@ -134,13 +144,13 @@ float get_desviation (){
   parser.parse("G91");
   GcodeSuite::process_parsed_command();
   
-  parser.parse("G1 Z-0.1 F800");
+  parser.parse("G1 Z-0.1 F500");
 
   while (digitalRead(Z_MIN_PIN) != LOW){
 	  GcodeSuite::process_parsed_command();
     planner.synchronize();
     desviation=desviation+precission;
-    GcodeSuite::host_keepalive();
+    idle();
   }
   
   parser.parse("G90");
@@ -187,7 +197,7 @@ void a_bit_down(){
   GcodeSuite::host_keepalive();
   parser.parse("G90");
   GcodeSuite::process_parsed_command();
-  parser.parse("G1 Z5 F800");
+  parser.parse("G1 Z5 F500");
   GcodeSuite::process_parsed_command();
   planner.synchronize();
 }
@@ -201,15 +211,6 @@ void GcodeSuite::M777() {
   parser.parse("G90");
   GcodeSuite::process_parsed_command();
   
-  //parser.parse("M113");
-  //process_parsed_command();
-  
-  //parser.parse("M106");
-  //GcodeSuite::process_parsed_command();
-
-  //parser.parse("M104 S120");
-  //GcodeSuite::process_parsed_command();
-  
   parser.parse("M206 X0 Y0 Z0");
   GcodeSuite::process_parsed_command();
   
@@ -217,39 +218,41 @@ void GcodeSuite::M777() {
   GcodeSuite::process_parsed_command();
   planner.synchronize();
   
-  while ( (maxim > 1) && (rep_times < 3) ){
+  while ( (maxim > 40) && (rep_times < 5) ){
 	  
-	  a_bit_down();
-
-	  parser.parse("G1 X145 Y110 F2000");
+    /*
+    a_bit_down();
+    //Center position
+	  parser.parse("G1 X75 Y75 F1100");
 	  GcodeSuite::process_parsed_command();
 	  planner.synchronize();
 	  float desv0 = get_desviation();
+    */
 
 	  a_bit_down();
-
-	  parser.parse("G1 X210 Y30 F2000");
+    //Back left
+	  parser.parse("G1 X200 Y50 F1100");
 	  GcodeSuite::process_parsed_command();
 	  planner.synchronize();
 	  float desv2 = get_desviation();
 
 	  a_bit_down();
-
-	  parser.parse("G1 X210 Y210 F2000");
+    //Front left
+	  parser.parse("G1 X200 Y200 F1100");
 	  GcodeSuite::process_parsed_command();
 	  planner.synchronize();
 	  float desv1 = get_desviation();
 
 	  a_bit_down();
-
-	  parser.parse("G1 X80 Y210 F2000");
+    //Front right
+	  parser.parse("G1 X50 Y200 F1100");
 	  GcodeSuite::process_parsed_command();
 	  planner.synchronize();
 	  float desv3 = get_desviation();
 
 	  a_bit_down();
-
-	  parser.parse("G1 X80 Y30 F2000");
+    //Back right
+	  parser.parse("G1 X50 Y50 F1100");
 	  GcodeSuite::process_parsed_command();
 	  planner.synchronize();
 	  float desv4 = get_desviation();
@@ -257,10 +260,10 @@ void GcodeSuite::M777() {
 	  /* float angles[]={desv1,desv2,desv3,desv4};
 	  float minim = getMin(angles, 4);  // pass the array and its size */
 
-	  float corrected1 = get_steps(desv1-desv0);
-	  float corrected2 = get_steps(desv2-desv0);
-	  float corrected3 = get_steps(desv3-desv0);
-	  float corrected4 = get_steps(desv4-desv0);
+	  float corrected1 = get_steps(desv1-desv1);
+	  float corrected2 = get_steps(desv2-desv1);
+	  float corrected3 = get_steps(desv3-desv1);
+	  float corrected4 = get_steps(desv4-desv1);
 	  SERIAL_ECHOLN("Desviation:");
 	  SERIAL_ECHO(corrected1);
 	  SERIAL_ECHO(",");
@@ -300,23 +303,6 @@ void GcodeSuite::M777() {
 	  SERIAL_ECHOLN(maxim); 
 	  rep_times=rep_times+1;
   }
-  
-  //parser.parse("M104 S0");
-  //GcodeSuite::process_parsed_command();
-  
-  //parser.parse("M501");
-  //GcodeSuite::process_parsed_command();
-
-  parser.parse("G28 X Y");
-  GcodeSuite::process_parsed_command();
-  planner.synchronize();
-
-  parser.parse("G28 Z");
-  GcodeSuite::process_parsed_command();
-  planner.synchronize();
-  
-  //parser.parse("M501");
-  //GcodeSuite::process_parsed_command();
   
   SERIAL_ECHOLN("Ended HW bed leveling.");
   
