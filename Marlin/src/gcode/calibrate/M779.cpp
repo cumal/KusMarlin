@@ -41,14 +41,11 @@
 //#define M420_C_USE_MEAN
 
 /**
- * M779: Adjust Center Height
+ * M779: Adjust nozzle Height
  */
  
 void GcodeSuite::M779() {
-  SERIAL_ECHOLN("Starting height calibration...");
-
-  parser.parse("M104 S90");
-  GcodeSuite::process_parsed_command();
+  SERIAL_ECHOLN("Starting nozzle calibration...");
   
   parser.parse("G90");
   GcodeSuite::process_parsed_command();
@@ -60,7 +57,7 @@ void GcodeSuite::M779() {
   parser.parse("M206 X0 Y0 Z0");
 	GcodeSuite::process_parsed_command();
 
-  parser.parse("G1 X135 Y110 F1500");
+  parser.parse("G1 X125 Y110 F1000");
 	GcodeSuite::process_parsed_command();
 	planner.synchronize();
 
