@@ -34,6 +34,10 @@
   #include "../../feature/power.h"
 #endif
 
+#if ENABLED(POWER_LOSS_RECOVERY)
+  #include "../../feature/powerloss.h"
+#endif
+
 #if HAS_SUICIDE
   #include "../../MarlinCore.h"
 #endif
@@ -48,7 +52,7 @@
 
     // S: Report the current power supply state and exit
     if (parser.seen('S')) {
-      SERIAL_ECHOF(powerManager.psu_on ? F("PS:1\n") : F("PS:0\n"));
+      SERIAL_ECHO(powerManager.psu_on ? F("PS:1\n") : F("PS:0\n"));
       return;
     }
 
@@ -63,7 +67,7 @@
       OUT_WRITE(SUICIDE_PIN, !SUICIDE_PIN_STATE);
     #endif
 
-    TERN_(HAS_LCD_MENU, ui.reset_status());
+    TERN_(HAS_MARLINUI_MENU, ui.reset_status());
   }
 
 #endif // PSU_CONTROL
@@ -79,20 +83,44 @@ void GcodeSuite::M81() {
 
   print_job_timer.stop();
 
-  #if HAS_FAN
-    #if ENABLED(PROBING_FANS_OFF)
-      thermalManager.fans_paused = false;
-      ZERO(thermalManager.saved_fan_speed);
-    #endif
+  #if ALL(HAS_FAN, PROBING_FANS_OFF)
+    thermalManager.fans_paused = false;
+    ZERO(thermalManager.saved_fan_speed);
   #endif
+
+  TERN_(POWER_LOSS_RECOVERY, recovery.purge()); // Clear PLR on intentional shutdown
 
   safe_delay(1000); // Wait 1 second before switching off
 
-  #if HAS_SUICIDE
-    suicide();
-  #elif ENABLED(PSU_CONTROL)
-    powerManager.power_off_soon();
+  LCD_MESSAGE_F(MACHINE_NAME " " STR_OFF ".");
+
+  bool delayed_power_off = false;
+
+  #if ENABLED(POWER_OFF_TIMER)
+    if (parser.seenval('D')) {
+      uint16_t delay = parser.value_ushort();
+      if (delay > 1) { // skip already observed 1s delay
+        delayed_power_off = true;
+        powerManager.setPowerOffTimer(SEC_TO_MS(delay - 1));
+      }
+    }
   #endif
 
-  LCD_MESSAGE_F(MACHINE_NAME " " STR_OFF ".");
+  #if ENABLED(POWER_OFF_WAIT_FOR_COOLDOWN)
+    if (parser.boolval('S')) {
+      delayed_power_off = true;
+      powerManager.setPowerOffOnCooldown(true);
+    }
+  #endif
+
+  if (delayed_power_off) {
+    SERIAL_ECHOLNPGM(STR_DELAYED_POWEROFF);
+    return;
+  }
+
+  #if ENABLED(PSU_CONTROL)
+    powerManager.power_off_soon();
+  #elif HAS_SUICIDE
+    suicide();
+  #endif
 }

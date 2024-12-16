@@ -41,7 +41,7 @@ typedef uint32_t hal_timer_t;
 #define FTM0_TIMER_PRESCALE_BITS 0b011
 #define FTM1_TIMER_PRESCALE_BITS 0b010
 
-#define FTM0_TIMER_RATE (F_BUS / (FTM0_TIMER_PRESCALE)) // 60MHz / 8 = 7500kHz
+#define FTM0_TIMER_RATE (F_BUS / (FTM0_TIMER_PRESCALE)) // 60MHz / 8 = 7.5MHz
 #define FTM1_TIMER_RATE (F_BUS / (FTM1_TIMER_PRESCALE)) // 60MHz / 4 = 15MHz
 
 #define HAL_TIMER_RATE         (FTM0_TIMER_RATE)
@@ -110,4 +110,4 @@ void HAL_timer_disable_interrupt(const uint8_t timer_num);
 bool HAL_timer_interrupt_enabled(const uint8_t timer_num);
 
 void HAL_timer_isr_prologue(const uint8_t timer_num);
-#define HAL_timer_isr_epilogue(T)
+#define HAL_timer_isr_epilogue(T) NOOP

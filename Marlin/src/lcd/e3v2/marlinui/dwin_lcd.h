@@ -64,6 +64,8 @@
 #define ICON_UpArrow              14
 #define ICON_DownArrow            15
 #define ICON_BedLine              16
+#define ICON_BedLevelOff          17
+#define ICON_BedLevelOn           18
 
 #include "../common/dwin_font.h"
 
@@ -74,7 +76,3 @@
 #include "../common/dwin_color.h"
 
 #define Color_Bg_Heading  0x3344  // Static Heading
-
-// Character matrix width x height
-//#define LCD_WIDTH ((DWIN_WIDTH) / 8)
-//#define LCD_HEIGHT ((DWIN_HEIGHT) / 12)

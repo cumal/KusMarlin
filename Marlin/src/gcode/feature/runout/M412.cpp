@@ -48,7 +48,7 @@ void GcodeSuite::M412() {
     if (seenR || seenS) runout.reset();
     if (seenS) runout.enabled = parser.value_bool();
     #if HAS_FILAMENT_RUNOUT_DISTANCE
-      if (parser.seen('D')) runout.set_runout_distance(parser.value_linear_units());
+      if (parser.seenval('D')) runout.set_runout_distance(parser.value_linear_units());
     #endif
   }
   else {
@@ -67,6 +67,8 @@ void GcodeSuite::M412() {
 }
 
 void GcodeSuite::M412_report(const bool forReplay/*=true*/) {
+  TERN_(MARLIN_SMALL_BUILD, return);
+
   report_heading_etc(forReplay, F(STR_FILAMENT_RUNOUT_SENSOR));
   SERIAL_ECHOPGM(
     "  M412 S", runout.enabled

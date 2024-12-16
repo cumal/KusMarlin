@@ -35,7 +35,9 @@
   #include "../../../module/tool_change.h"
 #endif
 
-#if HAS_PRUSA_MMU2
+#if HAS_PRUSA_MMU3
+  #include "../../../feature/mmu3/mmu3.h"
+#elif HAS_PRUSA_MMU2
   #include "../../../feature/mmu/mmu2.h"
 #endif
 
@@ -60,13 +62,13 @@ void GcodeSuite::M701() {
   if (TERN0(NO_MOTION_BEFORE_HOMING, axes_should_home())) park_point.z = 0;
 
   #if ENABLED(MIXING_EXTRUDER)
-    const int8_t target_e_stepper = get_target_e_stepper_from_command();
-    if (target_e_stepper < 0) return;
+    const int8_t eindex = get_target_e_stepper_from_command();
+    if (eindex < 0) return;
 
     const uint8_t old_mixing_tool = mixer.get_current_vtool();
     mixer.T(MIXER_DIRECT_SET_TOOL);
 
-    MIXER_STEPPER_LOOP(i) mixer.set_collector(i, (i == (uint8_t)target_e_stepper) ? 1.0 : 0.0);
+    MIXER_STEPPER_LOOP(i) mixer.set_collector(i, i == uint8_t(eindex) ? 1.0 : 0.0);
     mixer.normalize();
 
     const int8_t target_extruder = active_extruder;
@@ -101,12 +103,14 @@ void GcodeSuite::M701() {
   move_z_by(park_raise);
 
   // Load filament
-  #if HAS_PRUSA_MMU2
-    mmu2.load_filament_to_nozzle(target_extruder);
+  #if HAS_PRUSA_MMU3
+    mmu3.load_to_nozzle(target_extruder);
+  #elif HAS_PRUSA_MMU2
+    mmu2.load_to_nozzle(target_extruder);
   #else
     constexpr float     purge_length = ADVANCED_PAUSE_PURGE_LENGTH,
                     slow_load_length = FILAMENT_CHANGE_SLOW_LOAD_LENGTH;
-        const float fast_load_length = ABS(parser.seen('L') ? parser.value_axis_units(E_AXIS)
+        const float fast_load_length = ABS(parser.seenval('L') ? parser.value_axis_units(E_AXIS)
                                                             : fc_settings[active_extruder].load_length);
     load_filament(
       slow_load_length, fast_load_length, purge_length,
@@ -165,10 +169,10 @@ void GcodeSuite::M702() {
     #endif
 
     if (seenT) {
-      const int8_t target_e_stepper = get_target_e_stepper_from_command();
-      if (target_e_stepper < 0) return;
+      const int8_t eindex = get_target_e_stepper_from_command();
+      if (eindex < 0) return;
       mixer.T(MIXER_DIRECT_SET_TOOL);
-      MIXER_STEPPER_LOOP(i) mixer.set_collector(i, (i == (uint8_t)target_e_stepper) ? 1.0 : 0.0);
+      MIXER_STEPPER_LOOP(i) mixer.set_collector(i, i == uint8_t(eindex) ? 1.0 : 0.0);
       mixer.normalize();
     }
 
@@ -196,10 +200,12 @@ void GcodeSuite::M702() {
     do_blocking_move_to_z(_MIN(current_position.z + park_point.z, Z_MAX_POS), feedRate_t(NOZZLE_PARK_Z_FEEDRATE));
 
   // Unload filament
-  #if HAS_PRUSA_MMU2
+  #if HAS_PRUSA_MMU3
+    mmu3.unload();
+  #elif HAS_PRUSA_MMU2
     mmu2.unload();
   #else
-    #if BOTH(HAS_MULTI_EXTRUDER, FILAMENT_UNLOAD_ALL_EXTRUDERS)
+    #if ALL(HAS_MULTI_EXTRUDER, FILAMENT_UNLOAD_ALL_EXTRUDERS)
       if (!parser.seenval('T')) {
         HOTEND_LOOP() {
           if (e != active_extruder) tool_change(e);

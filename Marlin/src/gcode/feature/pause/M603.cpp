@@ -20,18 +20,14 @@
  *
  */
 
-#include "../../../inc/MarlinConfig.h"
+#include "../../../inc/MarlinConfigPre.h"
 
-#if ENABLED(ADVANCED_PAUSE_FEATURE)
+#if ENABLED(CONFIGURE_FILAMENT_CHANGE)
 
 #include "../../gcode.h"
 #include "../../../feature/pause.h"
 #include "../../../module/motion.h"
 #include "../../../module/printcounter.h"
-
-#if HAS_MULTI_EXTRUDER
-  #include "../../../module/tool_change.h"
-#endif
 
 /**
  * M603: Configure filament change
@@ -48,7 +44,7 @@ void GcodeSuite::M603() {
   if (target_extruder < 0) return;
 
   // Unload length
-  if (parser.seen('U')) {
+  if (parser.seenval('U')) {
     fc_settings[target_extruder].unload_length = ABS(parser.value_axis_units(E_AXIS));
     #if ENABLED(PREVENT_LENGTHY_EXTRUDE)
       NOMORE(fc_settings[target_extruder].unload_length, EXTRUDE_MAXLENGTH);
@@ -56,7 +52,7 @@ void GcodeSuite::M603() {
   }
 
   // Load length
-  if (parser.seen('L')) {
+  if (parser.seenval('L')) {
     fc_settings[target_extruder].load_length = ABS(parser.value_axis_units(E_AXIS));
     #if ENABLED(PREVENT_LENGTHY_EXTRUDE)
       NOMORE(fc_settings[target_extruder].load_length, EXTRUDE_MAXLENGTH);
@@ -65,6 +61,8 @@ void GcodeSuite::M603() {
 }
 
 void GcodeSuite::M603_report(const bool forReplay/*=true*/) {
+  TERN_(MARLIN_SMALL_BUILD, return);
+
   report_heading(forReplay, F(STR_FILAMENT_LOAD_UNLOAD));
 
   #if EXTRUDERS == 1
@@ -72,7 +70,7 @@ void GcodeSuite::M603_report(const bool forReplay/*=true*/) {
     SERIAL_ECHOPGM("  M603 L", LINEAR_UNIT(fc_settings[0].load_length), " U", LINEAR_UNIT(fc_settings[0].unload_length), " ;");
     say_units();
   #else
-    LOOP_L_N(e, EXTRUDERS) {
+    EXTRUDER_LOOP() {
       report_echo_start(forReplay);
       SERIAL_ECHOPGM("  M603 T", e, " L", LINEAR_UNIT(fc_settings[e].load_length), " U", LINEAR_UNIT(fc_settings[e].unload_length), " ;");
       say_units();
@@ -80,4 +78,4 @@ void GcodeSuite::M603_report(const bool forReplay/*=true*/) {
   #endif
 }
 
-#endif // ADVANCED_PAUSE_FEATURE
+#endif // CONFIGURE_FILAMENT_CHANGE
