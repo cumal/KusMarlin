@@ -1,9 +1,9 @@
 /**
  * Marlin 3D Printer Firmware
- *
  * Copyright (c) 2020 MarlinFirmware [https://github.com/MarlinFirmware/Marlin]
- * Copyright (c) 2016 Bob Cousins bobcousins42@googlemail.com
- * Copyright (c) 2017 Victor Perez
+ *
+ * Based on Sprinter and grbl.
+ * Copyright (c) 2011 Camiel Gubbels / Erik van der Zalm
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -81,7 +81,7 @@ typedef uint16_t hal_timer_t;
 #endif
 
 #if MB(BTT_SKR_MINI_E3_V1_0, BTT_SKR_E3_DIP, BTT_SKR_MINI_E3_V1_2, MKS_ROBIN_LITE, MKS_ROBIN_E3D, MKS_ROBIN_E3)
-  // SKR Mini E3 boards use PA8 as FAN_PIN, so TIMER 1 is used for Fan PWM.
+  // SKR Mini E3 boards use PA8 as FAN0_PIN, so TIMER 1 is used for Fan PWM.
   #ifdef STM32_HIGH_DENSITY
     #define MF_TIMER_SERVO0  8  // tone.cpp uses Timer 4
   #else
@@ -188,7 +188,7 @@ FORCE_INLINE static void HAL_timer_isr_prologue(const uint8_t timer_num) {
   }
 }
 
-#define HAL_timer_isr_epilogue(T)
+#define HAL_timer_isr_epilogue(T) NOOP
 
 // No command is available in framework to turn off ARPE bit, which is turned on by default in libmaple.
 // Needed here to reset ARPE=0 for stepper timer

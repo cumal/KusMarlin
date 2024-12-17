@@ -65,9 +65,7 @@
       return;
     }
   }
-  parser.parse("G90");
-  GcodeSuite::process_parsed_command();
-
+  gcode.process_subcommands_now("G90");
   if (loo > 0) {
     digitalWrite(Z_DIR_PIN, HIGH); //High=up dir
   } else if (loo < 0) {
@@ -76,9 +74,7 @@
     SERIAL_ECHOLN("Failed to detect direction");
     return;
   }
-
   analogWrite(Z_ENABLE_PIN, 255); //Deactivate all z stepper
-  
   if (mot==0){
     // Activate motor 1 and disable rest
     analogWrite(M1_ENABLE_PIN, 0);
@@ -106,7 +102,6 @@
   }
 
   // Move steps
-  planner.synchronize();
   for (float x = 0; x < abs(loo); x++) {
     digitalWrite(Z_STEP_PIN, HIGH);
     delay (5/2);
@@ -128,28 +123,23 @@
 float getDesviation(){
   idle();
   float measuredDesv = 0;
-  parser.parse("G91"); // Relative positioning
-  GcodeSuite::process_parsed_command();
-
+  gcode.process_subcommands_now("G91"); // Relative positioning
   if (digitalRead(Z_MIN_PIN) == LOW) { // Endpoint triggered. Go down
-    parser.parse("G1 Z0.1 F500");
     while (digitalRead(Z_MIN_PIN) == LOW){
-      GcodeSuite::process_parsed_command();
+      gcode.process_subcommands_now("G1 Z0.1 F500");
       planner.synchronize();
       measuredDesv = measuredDesv - PRECISSION;
     }
     measuredDesv = measuredDesv + PRECISSION; // last move goes out height
   } else { // Endpoint not triggered. Go up
-    parser.parse("G1 Z-0.1 F500");
     while (digitalRead(Z_MIN_PIN) != LOW){
-      GcodeSuite::process_parsed_command();
+      gcode.process_subcommands_now("G1 Z-0.1 F500");
       planner.synchronize();
       measuredDesv = measuredDesv + PRECISSION;
     }
   }
   idle();
-  parser.parse("G90"); // Absolute positioning
-  GcodeSuite::process_parsed_command();
+  gcode.process_subcommands_now("G90"); // Absolute positioning
   return measuredDesv;
 }
 
@@ -178,79 +168,56 @@ float getSteps(float desviation){
 
 void aBitDown(){
   idle();
-  parser.parse("G91");
-  GcodeSuite::process_parsed_command();
-  parser.parse("G1 Z5 F500");
-  GcodeSuite::process_parsed_command();
+  gcode.process_subcommands_now("G91");
+  gcode.process_subcommands_now("G1 Z5 F500");
   planner.synchronize();
-  parser.parse("G90");
-  GcodeSuite::process_parsed_command();
+  gcode.process_subcommands_now("G90");
 }
 
-void printDesviationSummary(float motDesv[]) {
+void printDesviationSummary(float items[]) {
   SERIAL_ECHO("Desviation summary: ");
-  SERIAL_ECHO("Motor0:");
-  SERIAL_ECHO(motDesv[0]);
+  SERIAL_ECHO(items[0]);
   SERIAL_ECHO(", ");
-  SERIAL_ECHO("Motor1:");
-  SERIAL_ECHO(motDesv[1]);
+  SERIAL_ECHO(items[1]);
   SERIAL_ECHO(", ");
-  SERIAL_ECHO("Motor2:");
-  SERIAL_ECHO(motDesv[2]);
+  SERIAL_ECHO(items[2]);
   SERIAL_ECHO(", ");
-  SERIAL_ECHO("Motor3:");
-  SERIAL_ECHO(motDesv[3]);
+  SERIAL_ECHO(items[3]);
   SERIAL_ECHOLN(".");
 }
  
 void GcodeSuite::M777() {
   SERIAL_ECHOLN("Starting HW bed leveling...");
-
-  int repTimes = 0;
-
-  parser.parse("G90");
-  GcodeSuite::process_parsed_command();
-  
-  parser.parse("G28 X Y");
-  GcodeSuite::process_parsed_command();
+  gcode.process_subcommands_now("G90");
+  // Home XY
+  gcode.process_subcommands_now("G28 X Y");
   planner.synchronize();
-
+  int repTimes = 0;
   bool run = true;
   xy_pos_t motPosition[NUM_Z_MOTORS] = Z_MOTORS_POS;
   char cmd[20], str_1[16], str_2[16];
-  float desvSteps;
   float heightDiff;
+  float motDesv[NUM_Z_MOTORS];
   
   while (run){
-
-    float motDesv[NUM_Z_MOTORS];
-
     for (int i = 0; i < NUM_Z_MOTORS; i++) {
       // Center
-      parser.parse("G28 Z");
-      GcodeSuite::process_parsed_command();
-      planner.synchronize();
-      // Move to measure position 0
-      parser.parse("G90");
-      GcodeSuite::process_parsed_command();
+      gcode.process_subcommands_now("G28 Z");
+      planner.synchronize(); // Wait move to finish
+      // Move to measure position
+      gcode.process_subcommands_now("G90");
       sprintf_P(cmd, PSTR("G1X%sY%sF1300"), dtostrf(motPosition[i].x, 1, 3, str_1), dtostrf(motPosition[i].y, 1, 3, str_2));
       gcode.process_subcommands_now(cmd);
+      planner.synchronize();
       // Gets the height difference
       motDesv[i] = getDesviation();
-      // Calculate steps and move
-      desvSteps = getSteps(motDesv[i]);
-      if (desvSteps != 0) { moveMotor(i, desvSteps); }
-      planner.synchronize();
+      if (motDesv[i] != 0) {
+        // Calculate steps and fix height
+        moveMotor(i, getSteps(motDesv[i]));
+      }
     }
-
-    ///////
-
     printDesviationSummary(motDesv);
-
     heightDiff = getMax(motDesv, NUM_Z_MOTORS) - getMin(motDesv, NUM_Z_MOTORS);
-    
-    repTimes=repTimes+1;
-
     if ( ((int)heightDiff*100 <= (int)MAXOFFSET)*100 || (repTimes == MAXREPETITIONS) ) {
       run = false;
       SERIAL_ECHO("Maximun: ");
@@ -264,6 +231,8 @@ void GcodeSuite::M777() {
     } else {
       SERIAL_ECHOLN("Not leveled.");
     }
+
+    repTimes=repTimes+1;
 
   }
   
