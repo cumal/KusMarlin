@@ -38,14 +38,14 @@
 
 // Custom parameters
 #define MAXREPETITIONS 5
-#define MAXOFFSET 2 // correspond to 0.2
+#define MAXOFFSET 2 // correspond to 0.2 see (1)
 #define Z_MOTORS_POS { { 20, 200 } , { 20, 40 } , { 160 , 200 } , { 160 , 40 } }
 
 /**
  * M777: Hardware bed leveling
  */
 
- void moveMotor(const uint8_t mot, uint8_t loo) {
+ void moveMotor(const int mot, int loo) {
   gcode.process_subcommands_now("G90");
   if (loo > 0) {
     digitalWrite(Z_DIR_PIN, HIGH); //High=up dir
@@ -74,7 +74,7 @@
     analogWrite(M2_ENABLE_PIN, 255);
     analogWrite(M3_ENABLE_PIN, 255);
   }
-  for (int x = 0; x < abs(loo); x++) { // Move steps
+  for (int x = 0; x < abs(loo*40); x++) { // Move steps. Normally 400 steps per mm, reduced to 40 see (1)
     digitalWrite(Z_STEP_PIN, HIGH);
     delay (2.5);
     digitalWrite(Z_STEP_PIN, LOW);
@@ -89,8 +89,8 @@
   analogWrite(Z_ENABLE_PIN, 0); // Activate Z steppers to keep height
 }
 
-uint8_t getDesviation(){
-  uint8_t measuredDesv = 0;
+int getDesviation(){
+  int measuredDesv = 0;
   gcode.process_subcommands_now("G91"); // Relative positioning
   if (digitalRead(Z_MIN_PIN) == LOW) { // Endpoint triggered. Go down
     while (digitalRead(Z_MIN_PIN) == LOW){
@@ -110,17 +110,17 @@ uint8_t getDesviation(){
   return measuredDesv;
 }
 
-float getMin(uint8_t array[]){
+float getMin(int array[]){
   float minimum = array[0];
-  for (uint8_t i = 0; i < 4; i++) {
+  for (int i = 0; i < 4; i++) {
     if (array[i] < minimum) { minimum = array[i]; }
   }
   return minimum;
 }
 
-float getMax(uint8_t array[]){
+float getMax(int array[]){
   float maximun = array[0];
-  for (uint8_t i = 0; i < 4; i++) {
+  for (int i = 0; i < 4; i++) {
     if (array[i] > maximun) { maximun = array[i]; }
   }
   return maximun;
@@ -133,7 +133,7 @@ void aBitDown(){
   gcode.process_subcommands_now("G90");
 }
 
-void printDesviationSummary(uint8_t items[]) {
+void printDesviationSummary(int items[]) {
   SERIAL_ECHO("Desviation summary: ");
   SERIAL_ECHO(items[0]);
   SERIAL_ECHO(", ");
@@ -141,8 +141,7 @@ void printDesviationSummary(uint8_t items[]) {
   SERIAL_ECHO(", ");
   SERIAL_ECHO(items[2]);
   SERIAL_ECHO(", ");
-  SERIAL_ECHO(items[3]);
-  SERIAL_ECHOLN(".");
+  SERIAL_ECHOLN(items[3]);
 }
  
 void GcodeSuite::M777() {
@@ -150,14 +149,14 @@ void GcodeSuite::M777() {
   gcode.process_subcommands_now("G90");
   gcode.process_subcommands_now("G28 X Y"); // Home XY
   planner.synchronize();
-  uint8_t repTimes = 1;
+  int repTimes = 1;
   bool run = true;
   xy_pos_t motPosition[4] = Z_MOTORS_POS;
   char cmd[20], str_1[16], str_2[16];
-  uint8_t motDesv[4];
-  uint8_t heightDiff;
+  int motDesv[4];
+  int heightDiff;
   while (run){
-    for (uint8_t i = 0; i < 4; i++) {
+    for (int i = 0; i < 4; i++) {
       gcode.process_subcommands_now("G28 Z"); // Center
       planner.synchronize(); // Wait move to finish
       gcode.process_subcommands_now("G90");
@@ -166,11 +165,11 @@ void GcodeSuite::M777() {
       planner.synchronize();
       motDesv[i] = getDesviation(); // Gets the height difference
       if (motDesv[i] != 0) {        
-        moveMotor(i, 40*motDesv[i]); // Calculate steps and fix height. Normally 400 steps per mm, reduced to 40 see (1)
+        moveMotor(i, motDesv[i]); // fix height
       }
     }
     printDesviationSummary(motDesv);
-    heightDiff = (getMax(motDesv) - getMin(motDesv))*10;
+    heightDiff = (getMax(motDesv) - getMin(motDesv));
     if ( (heightDiff <= MAXOFFSET) || (repTimes == MAXREPETITIONS) ) {
       run = false;
       SERIAL_ECHO("Maximun: ");
