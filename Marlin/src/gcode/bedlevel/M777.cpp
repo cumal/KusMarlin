@@ -37,144 +37,103 @@
 #endif
 
 // Custom parameters
-#define MAXREPETITIONS 10
-#define MAXOFFSET 0.20
-#define MAXDIFF 400
-#define PRECISSION 0.1
-#define STEPSPERMM 400
-#define NUM_Z_MOTORS 4
+#define MAXREPETITIONS 5
+#define MAXOFFSET 2 // correspond to 0.2
 #define Z_MOTORS_POS { { 20, 200 } , { 20, 40 } , { 160 , 200 } , { 160 , 40 } }
-#define sgn(x) ((x) < 0 ? -1 : ((x) > 0 ? 1 : 0))
-
-//#define M420_C_USE_MEAN
 
 /**
  * M777: Hardware bed leveling
  */
 
- void moveMotor(const int mot, float loo) {
-  idle();
-  // Max height diff 400
-  if (abs(loo)>MAXDIFF) {
-    if (sgn(loo) == 1) {
-      loo = MAXDIFF;
-    } else if (sgn(loo) == -1) {
-      loo = -MAXDIFF;
-    } else {
-      SERIAL_ECHOLN("Failed to parse diff");
-      return;
-    }
-  }
+ void moveMotor(const uint8_t mot, uint8_t loo) {
   gcode.process_subcommands_now("G90");
   if (loo > 0) {
     digitalWrite(Z_DIR_PIN, HIGH); //High=up dir
-  } else if (loo < 0) {
-    digitalWrite(Z_DIR_PIN, LOW); //LOW=down dir
   } else {
-    SERIAL_ECHOLN("Failed to detect direction");
-    return;
+    digitalWrite(Z_DIR_PIN, LOW); //LOW=down dir
   }
   analogWrite(Z_ENABLE_PIN, 255); //Deactivate all z stepper
-  if (mot==0){
-    // Activate motor 1 and disable rest
+  if (mot==0){ // Activate motor 0 and disable rest
     analogWrite(M1_ENABLE_PIN, 0);
     analogWrite(M2_ENABLE_PIN, 255);
     analogWrite(M3_ENABLE_PIN, 255);
     analogWrite(M4_ENABLE_PIN, 255);
-  }
-  else if (mot==1){
+  } else if (mot==1) { // Activate motor 1 and disable rest
     analogWrite(M2_ENABLE_PIN, 0);
     analogWrite(M1_ENABLE_PIN, 255);
     analogWrite(M3_ENABLE_PIN, 255);
     analogWrite(M4_ENABLE_PIN, 255);
-  }
-  else if (mot==2){
+  } else if (mot==2) { // Activate motor 2 and disable rest
     analogWrite(M3_ENABLE_PIN, 0);
     analogWrite(M1_ENABLE_PIN, 255);
     analogWrite(M2_ENABLE_PIN, 255);
     analogWrite(M4_ENABLE_PIN, 255);
-  }
-  else if (mot==3){
+  } else if (mot==3) { // Activate motor 3 and disable rest
     analogWrite(M4_ENABLE_PIN, 0);
     analogWrite(M1_ENABLE_PIN, 255);
     analogWrite(M2_ENABLE_PIN, 255);
     analogWrite(M3_ENABLE_PIN, 255);
   }
-
-  // Move steps
-  for (float x = 0; x < abs(loo); x++) {
+  for (int x = 0; x < abs(loo); x++) { // Move steps
     digitalWrite(Z_STEP_PIN, HIGH);
-    delay (5/2);
+    delay (2.5);
     digitalWrite(Z_STEP_PIN, LOW);
-    delay (5/2);
+    delay (2.5);
     idle();
   }
-
   // Deactivate motor
   if (mot==0){ analogWrite(M1_ENABLE_PIN, 255); }
   else if (mot==1){ analogWrite(M2_ENABLE_PIN, 255); }
   else if (mot==2){ analogWrite(M3_ENABLE_PIN, 255); }
   else if (mot==3){ analogWrite(M4_ENABLE_PIN, 255); }
-
-  // Activate Z steppers to keep height
-  analogWrite(Z_ENABLE_PIN, 0);
+  analogWrite(Z_ENABLE_PIN, 0); // Activate Z steppers to keep height
 }
 
-float getDesviation(){
-  idle();
-  float measuredDesv = 0;
+uint8_t getDesviation(){
+  uint8_t measuredDesv = 0;
   gcode.process_subcommands_now("G91"); // Relative positioning
   if (digitalRead(Z_MIN_PIN) == LOW) { // Endpoint triggered. Go down
     while (digitalRead(Z_MIN_PIN) == LOW){
       gcode.process_subcommands_now("G1 Z0.1 F500");
       planner.synchronize();
-      measuredDesv = measuredDesv - PRECISSION;
+      measuredDesv = measuredDesv - 1; // Use 1 instead of 0.1 to avoid float errors (1)
     }
-    measuredDesv = measuredDesv + PRECISSION; // last move goes out height
+    measuredDesv = measuredDesv + 1; // last move goes out height
   } else { // Endpoint not triggered. Go up
     while (digitalRead(Z_MIN_PIN) != LOW){
       gcode.process_subcommands_now("G1 Z-0.1 F500");
       planner.synchronize();
-      measuredDesv = measuredDesv + PRECISSION;
+      measuredDesv = measuredDesv + 1; // Use 1 instead of 0.1 to avoid float errors (1)
     }
   }
-  idle();
   gcode.process_subcommands_now("G90"); // Absolute positioning
   return measuredDesv;
 }
 
-float getMin(float array[], int size){
+float getMin(uint8_t array[]){
   float minimum = array[0];
-  for (int i = 0; i < size; i++)
-  {
+  for (uint8_t i = 0; i < 4; i++) {
     if (array[i] < minimum) { minimum = array[i]; }
   }
   return minimum;
 }
 
-float getMax(float array[], int size){
+float getMax(uint8_t array[]){
   float maximun = array[0];
-  for (int i = 0; i < size; i++) {
+  for (uint8_t i = 0; i < 4; i++) {
     if (array[i] > maximun) { maximun = array[i]; }
   }
   return maximun;
 }
 
-float getSteps(float desviation){
-  // 400 steps per mm
-  float toApply = STEPSPERMM*desviation;
-  return toApply;
-}
-
 void aBitDown(){
-  idle();
   gcode.process_subcommands_now("G91");
   gcode.process_subcommands_now("G1 Z5 F500");
   planner.synchronize();
   gcode.process_subcommands_now("G90");
 }
 
-void printDesviationSummary(float items[]) {
+void printDesviationSummary(uint8_t items[]) {
   SERIAL_ECHO("Desviation summary: ");
   SERIAL_ECHO(items[0]);
   SERIAL_ECHO(", ");
@@ -189,53 +148,41 @@ void printDesviationSummary(float items[]) {
 void GcodeSuite::M777() {
   SERIAL_ECHOLN("Starting HW bed leveling...");
   gcode.process_subcommands_now("G90");
-  // Home XY
-  gcode.process_subcommands_now("G28 X Y");
+  gcode.process_subcommands_now("G28 X Y"); // Home XY
   planner.synchronize();
-  int repTimes = 0;
+  uint8_t repTimes = 1;
   bool run = true;
-  xy_pos_t motPosition[NUM_Z_MOTORS] = Z_MOTORS_POS;
+  xy_pos_t motPosition[4] = Z_MOTORS_POS;
   char cmd[20], str_1[16], str_2[16];
-  float heightDiff;
-  float motDesv[NUM_Z_MOTORS];
-  
+  uint8_t motDesv[4];
+  uint8_t heightDiff;
   while (run){
-    for (int i = 0; i < NUM_Z_MOTORS; i++) {
-      // Center
-      gcode.process_subcommands_now("G28 Z");
+    for (uint8_t i = 0; i < 4; i++) {
+      gcode.process_subcommands_now("G28 Z"); // Center
       planner.synchronize(); // Wait move to finish
-      // Move to measure position
       gcode.process_subcommands_now("G90");
       sprintf_P(cmd, PSTR("G1X%sY%sF1300"), dtostrf(motPosition[i].x, 1, 3, str_1), dtostrf(motPosition[i].y, 1, 3, str_2));
-      gcode.process_subcommands_now(cmd);
+      gcode.process_subcommands_now(cmd); // Move to measure position
       planner.synchronize();
-      // Gets the height difference
-      motDesv[i] = getDesviation();
-      if (motDesv[i] != 0) {
-        // Calculate steps and fix height
-        moveMotor(i, getSteps(motDesv[i]));
+      motDesv[i] = getDesviation(); // Gets the height difference
+      if (motDesv[i] != 0) {        
+        moveMotor(i, 40*motDesv[i]); // Calculate steps and fix height. Normally 400 steps per mm, reduced to 40 see (1)
       }
     }
     printDesviationSummary(motDesv);
-    heightDiff = getMax(motDesv, NUM_Z_MOTORS) - getMin(motDesv, NUM_Z_MOTORS);
-    if ( ((int)heightDiff*100 <= (int)MAXOFFSET)*100 || (repTimes == MAXREPETITIONS) ) {
+    heightDiff = (getMax(motDesv) - getMin(motDesv))*10;
+    if ( (heightDiff <= MAXOFFSET) || (repTimes == MAXREPETITIONS) ) {
       run = false;
       SERIAL_ECHO("Maximun: ");
       SERIAL_ECHO(heightDiff);
       SERIAL_ECHO("/");
-      SERIAL_ECHO(MAXOFFSET);
-      SERIAL_ECHO(". Repetitions: ");
+      SERIAL_ECHOLN(MAXOFFSET);
+      SERIAL_ECHO("Repetitions: ");
       SERIAL_ECHO(repTimes);
       SERIAL_ECHO("/");
       SERIAL_ECHOLN(MAXREPETITIONS);
-    } else {
-      SERIAL_ECHOLN("Not leveled.");
     }
-
     repTimes=repTimes+1;
-
   }
-  
   SERIAL_ECHOLN("Ended HW bed leveling.");
-  
 }
