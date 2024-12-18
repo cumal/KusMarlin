@@ -152,7 +152,7 @@ void GcodeSuite::M777() {
   gcode.process_subcommands_now("G90"); // Absolute positioning
   gcode.process_subcommands_now("G28 X Y"); // Home XY
   planner.synchronize();
-  int repTimes = 1;
+  int repTimes = 0;
   bool run = true;
   xy_pos_t motPosition[4] = Z_MOTORS_POS;
   char cmd[20], str_1[16], str_2[16];
