@@ -46,8 +46,9 @@
  */
 
  void moveMotor(const int mot, int loo) {
-  gcode.process_subcommands_now("G90");
-  if (loo > 0) {
+  if (loo == 0) {
+    return;
+  } else if (loo > 0) {
     digitalWrite(Z_DIR_PIN, HIGH); //High=up dir
   } else {
     digitalWrite(Z_DIR_PIN, LOW); //LOW=down dir
@@ -127,10 +128,10 @@ float getMax(int array[]){
 }
 
 void aBitDown(){
-  gcode.process_subcommands_now("G91");
+  gcode.process_subcommands_now("G91"); // Relative positioning
   gcode.process_subcommands_now("G1 Z5 F500");
   planner.synchronize();
-  gcode.process_subcommands_now("G90");
+  gcode.process_subcommands_now("G90"); // Absolute positioning
 }
 
 void printDesviationSummary(int items[]) {
@@ -146,7 +147,9 @@ void printDesviationSummary(int items[]) {
  
 void GcodeSuite::M777() {
   SERIAL_ECHOLN("Starting HW bed leveling...");
-  gcode.process_subcommands_now("G90");
+  float probe_z_offset = probe.offset.z; // Gets z probe offset
+  gcode.process_subcommands_now("M851 Z0"); // Removes Z probe offset
+  gcode.process_subcommands_now("G90"); // Absolute positioning
   gcode.process_subcommands_now("G28 X Y"); // Home XY
   planner.synchronize();
   int repTimes = 1;
@@ -156,17 +159,17 @@ void GcodeSuite::M777() {
   int motDesv[4];
   int heightDiff;
   while (run){
+    gcode.process_subcommands_now("G28 Z"); // Center
+    planner.synchronize(); // Wait move to finish
     for (int i = 0; i < 4; i++) {
-      gcode.process_subcommands_now("G28 Z"); // Center
-      planner.synchronize(); // Wait move to finish
-      gcode.process_subcommands_now("G90");
-      sprintf_P(cmd, PSTR("G1X%sY%sF1300"), dtostrf(motPosition[i].x, 1, 3, str_1), dtostrf(motPosition[i].y, 1, 3, str_2));
+      gcode.process_subcommands_now("G90"); // Absolute positioning
+      sprintf_P(cmd, PSTR("G1X%sY%sZ0F1300"), dtostrf(motPosition[i].x, 1, 3, str_1), dtostrf(motPosition[i].y, 1, 3, str_2));
       gcode.process_subcommands_now(cmd); // Move to measure position
       planner.synchronize();
       motDesv[i] = getDesviation(); // Gets the height difference
-      if (motDesv[i] != 0) {        
-        moveMotor(i, motDesv[i]); // fix height
-      }
+    }
+    for (int i = 0; i < 4; i++) {
+      moveMotor(i, motDesv[i]); // fix height
     }
     printDesviationSummary(motDesv);
     heightDiff = (getMax(motDesv) - getMin(motDesv));
@@ -183,5 +186,7 @@ void GcodeSuite::M777() {
     }
     repTimes=repTimes+1;
   }
+  sprintf_P(cmd, PSTR("M851Z%s"), dtostrf(probe_z_offset, 6, 2, str_1)); // Restore Z probe offset
+  gcode.process_subcommands_now(cmd); // Move to measure position
   SERIAL_ECHOLN("Ended HW bed leveling.");
 }
