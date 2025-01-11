@@ -1,3 +1,6 @@
 # Compiled binaries
 Marlin.ino.with_bootloader.mega.hex
 Marlin.ino.mega.hex
+
+# kicad
+*-backups
